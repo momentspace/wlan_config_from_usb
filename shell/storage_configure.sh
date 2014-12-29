@@ -1,6 +1,8 @@
 #!/bin/bash
+WLAN_IF="wlan0"
 LOGFILE="/var/log/wlan_config.log"
 WPA_PID="/var/run/wpa_supplicant.pid"
+DHCLIENT_PID="/var/run/dhclient.$WLAN_IF.pid"
 
 echo `date` " script called $0 $1 $DEVNAME" >> $LOGFILE
 
@@ -30,8 +32,15 @@ storage_mount() {
     if [ -e "/mnt/usb_memory/wpa_supplicant.conf" ]; then
       # 無線LANを繋ぎにいく
       echo `date` "client mode" >> $LOGFILE
-      wpa_supplicant -i wlan0 -c /mnt/usb_memory/wpa_supplicant.conf -Dwext >> $LOGFILE 2>&1 &
+      wpa_supplicant -i $WLAN_IF -c /mnt/usb_memory/wpa_supplicant.conf -Dwext >> $LOGFILE 2>&1 &
       echo $! > $WPA_PID
+
+      # dhclientが動いていないとき
+      if [ ! -e $DHCLIENT_PID ]; then
+        # 無線LAN IFのIPをDHCPで取得する
+        dhclient $WLAN_IF -pf $DHCLIENT_PID
+        echo `date` "dhclient start for $WLAN_IF. $DHCLIENT_PID is not exist." >> $LOGFILE
+      fi
     fi
   fi
 }
