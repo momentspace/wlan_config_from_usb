@@ -1,5 +1,5 @@
 #!/bin/bash
-LOGFILE="/home/moment/configure.log"
+LOGFILE="/var/log/wlan_config.log"
 WPA_PID="/var/run/wpa_supplicant.pid"
 
 echo `date` " script called $0 $1 $DEVNAME" >> $LOGFILE
