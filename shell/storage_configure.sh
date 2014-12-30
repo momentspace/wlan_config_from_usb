@@ -3,6 +3,7 @@ WLAN_IF="wlan0"
 LOGFILE="/var/log/wlan_config.log"
 WPA_PID="/var/run/wpa_supplicant.pid"
 DHCLIENT_PID="/var/run/dhclient.$WLAN_IF.pid"
+DHCLIENT_LEASE="/var/lib/dhcp/dhclient.$WLAN_IF.leases"
 
 echo `date` " script called $0 $1 $DEVNAME" >> $LOGFILE
 
@@ -38,7 +39,7 @@ storage_mount() {
       # dhclientが動いていないとき
       if [ ! -e $DHCLIENT_PID ]; then
         # 無線LAN IFのIPをDHCPで取得する
-        dhclient $WLAN_IF -pf $DHCLIENT_PID
+        dhclient -v -pf $DHCLIENT_PID -lf $DHCLIENT_LEASE $WLAN_IF
         echo `date` "dhclient start for $WLAN_IF. $DHCLIENT_PID is not exist." >> $LOGFILE
       fi
     fi
@@ -47,11 +48,16 @@ storage_mount() {
 
 storage_umount() {
   if [ -e "$WPA_PID" ]; then
-    echo `date` "wpa_supplicant is running. kill them. file: $WPA_PID:" `cat $PID` >> $LOGFILE
+    echo `date` "wpa_supplicant is running. kill them. file: $WPA_PID:" `cat $WPA_PID` >> $LOGFILE
     kill `cat "$WPA_PID"`
     rm $WPA_PID
   fi  
-  umount /dev/usb_memory
+  if [ -e $DHCLIENT_PID ]; then
+    echo `date` "dhclient is runnning. kill them. file: $DHCLIENT_PID: " `cat $DHCLIENT_PID` >> $LOGFILE
+    kill `cat "$DHCLIENT_PID"`
+    rm $DHCLIENT_PID
+  fi
+   umount /dev/usb_memory
 }
 
 case "$1" in
